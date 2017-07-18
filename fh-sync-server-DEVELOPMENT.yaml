@@ -1,0 +1,383 @@
+apiVersion: v1
+kind: Template
+metadata:
+  creationTimestamp: null
+  name: fh-sync-server
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+    creationTimestamp: null
+    name: fh-sync-server
+  spec:
+    ports:
+    - name: fh-sync-server
+      port: 3000
+      protocol: TCP
+      targetPort: 3000
+    selector:
+      run: fh-sync-server
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+      template.openshift.io/expose-uri: mongodb://{.spec.clusterIP}:{.spec.ports[?(.name=="mongo")].port}
+    creationTimestamp: null
+    labels:
+      app: mongodb-persistent
+      template: mongodb-persistent-template
+    name: mongodb
+  spec:
+    ports:
+    - name: mongo
+      port: 27017
+      protocol: TCP
+      targetPort: 27017
+    selector:
+      name: mongodb
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+    creationTimestamp: null
+    name: redis
+  spec:
+    ports:
+    - port: 6379
+      protocol: TCP
+      targetPort: 6379
+    selector:
+      run: redis
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftWebConsole
+    creationTimestamp: null
+    labels:
+      app: test1234
+    name: test1234
+  spec:
+    ports:
+    - name: 8080-tcp
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      deploymentconfig: test1234
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+    creationTimestamp: null
+    generation: 1
+    labels:
+      run: fh-sync-server
+    name: fh-sync-server
+  spec:
+    replicas: 1
+    selector:
+      run: fh-sync-server
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        annotations:
+          openshift.io/generated-by: OpenShiftNewApp
+        creationTimestamp: null
+        labels:
+          run: fh-sync-server
+      spec:
+        containers:
+        - env:
+          - name: MONGODB_USER
+            valueFrom:
+              secretKeyRef:
+                key: database-user
+                name: mongodb
+          - name: MONGODB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: database-password
+                name: mongodb
+          image: davidmartin/fh-sync-server
+          imagePullPolicy: Always
+          name: fh-sync-server
+          ports:
+          - containerPort: 3000
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    test: false
+    triggers:
+    - type: ConfigChange
+  status:
+    availableReplicas: 0
+    latestVersion: 0
+    observedGeneration: 0
+    replicas: 0
+    unavailableReplicas: 0
+    updatedReplicas: 0
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+    creationTimestamp: null
+    generation: 1
+    labels:
+      app: mongodb-persistent
+      template: mongodb-persistent-template
+    name: mongodb
+  spec:
+    replicas: 1
+    selector:
+      name: mongodb
+    strategy:
+      activeDeadlineSeconds: 21600
+      recreateParams:
+        timeoutSeconds: 600
+      resources: {}
+      type: Recreate
+    template:
+      metadata:
+        annotations:
+          openshift.io/generated-by: OpenShiftNewApp
+        creationTimestamp: null
+        labels:
+          name: mongodb
+      spec:
+        containers:
+        - env:
+          - name: MONGODB_USER
+            valueFrom:
+              secretKeyRef:
+                key: database-user
+                name: mongodb
+          - name: MONGODB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: database-password
+                name: mongodb
+          - name: MONGODB_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: database-admin-password
+                name: mongodb
+          - name: MONGODB_DATABASE
+            value: sync
+          image: centos/mongodb-32-centos7@sha256:aa37993c3be2d4731db79c0c7aba11db3e9352b1adc586c7e9054f57808789c0
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 27017
+            timeoutSeconds: 1
+          name: mongodb
+          ports:
+          - containerPort: 27017
+            protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+              - /bin/sh
+              - -i
+              - -c
+              - mongo 127.0.0.1:27017/$MONGODB_DATABASE -u $MONGODB_USER -p $MONGODB_PASSWORD
+                --eval="quit()"
+            failureThreshold: 3
+            initialDelaySeconds: 3
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              memory: 512Mi
+          securityContext:
+            capabilities: {}
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /var/lib/mongodb/data
+            name: mongodb-data
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: mongodb-data
+          persistentVolumeClaim:
+            claimName: mongodb
+    test: false
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - mongodb
+        from:
+          kind: ImageStreamTag
+          name: mongodb:3.2
+          namespace: openshift
+      type: ImageChange
+    - type: ConfigChange
+  status:
+    availableReplicas: 0
+    latestVersion: 0
+    observedGeneration: 0
+    replicas: 0
+    unavailableReplicas: 0
+    updatedReplicas: 0
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+    creationTimestamp: null
+    generation: 1
+    labels:
+      run: redis
+    name: redis
+  spec:
+    replicas: 1
+    selector:
+      run: redis
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        annotations:
+          openshift.io/generated-by: OpenShiftNewApp
+        creationTimestamp: null
+        labels:
+          run: redis
+      spec:
+        containers:
+        - image: rhmap/redis:2.18.22
+          imagePullPolicy: Always
+          name: redis
+          ports:
+          - containerPort: 6379
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    test: false
+    triggers:
+    - type: ConfigChange
+  status:
+    availableReplicas: 0
+    latestVersion: 0
+    observedGeneration: 0
+    replicas: 0
+    unavailableReplicas: 0
+    updatedReplicas: 0
+- apiVersion: v1
+  kind: Route
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+      openshift.io/host.generated: "true"
+    creationTimestamp: null
+    name: fh-sync-server
+  spec:
+    host: fh-sync-server-myproject.127.0.0.1.nip.io
+    port:
+      targetPort: fh-sync-server
+    tls:
+      termination: edge
+    to:
+      kind: Service
+      name: fh-sync-server
+      weight: 100
+    wildcardPolicy: None
+  status:
+    ingress:
+    - conditions:
+      - lastTransitionTime: 2017-07-18T15:32:16Z
+        status: "True"
+        type: Admitted
+      host: fh-sync-server-myproject.127.0.0.1.nip.io
+      routerName: router
+      wildcardPolicy: None
+- apiVersion: v1
+  data:
+    database-admin-password: dUxrSmZQbXNqOFh4dmNpcg==
+    database-password: U21nRk50Tm5nWDFYY2ZPcw==
+    database-user: dXNlckpYUA==
+  kind: Secret
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+      template.openshift.io/expose-admin_password: '{.data[''database-admin-password'']}'
+      template.openshift.io/expose-password: '{.data[''database-password'']}'
+      template.openshift.io/expose-username: '{.data[''database-user'']}'
+    creationTimestamp: null
+    labels:
+      app: mongodb-persistent
+      template: mongodb-persistent-template
+    name: mongodb
+  type: Opaque
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: mongodb
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 1Gi
+  status: {}
