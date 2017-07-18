@@ -3,8 +3,26 @@ const sync = require('fh-sync');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 
-const mongodbConnectionString = process.env.MONGO_CONNECTION_URL || 'mongodb://127.0.0.1:27017/sync';
-const redisUrl = process.env.REDIS_CONNECTION_URL || 'redis://127.0.0.1:6379';
+var mongodbConnectionString;
+
+if (process.env.MONGO_CONNECTION_URL) {
+  mongodbConnectionString = process.env.MONGO_CONNECTION_URL;
+} else if (process.env.MONGODB_USER && process.env.MONGODB_PASSWORD && process.env.MONGODB_SERVICE_PORT) {
+// running in kubernetes/openshift
+  mongodbConnectionString = `mongodb://${process.env.MONGODB_USER}:${process.env.MONGODB_PASSWORD}@mongodb:${process.env.MONGODB_SERVICE_PORT}/sync`;
+} else {
+  mongodbConnectionString = 'mongodb://127.0.0.1:27017/sync';
+}
+
+var redisUrl;
+if (process.env.REDIS_CONNECTION_URL) {
+  redisUrl = process.env.REDIS_CONNECTION_URL;
+} else if (process.env.REDIS_SERVICE_PORT) {
+  // running in kubernetes/openshift
+  redisUrl = `redis://redis:${process.env.REDIS_SERVICE_PORT}`;
+} else {
+  redisUrl = 'redis://127.0.0.1:6379';
+}
 
 var mongoOptions = {
   server: {
