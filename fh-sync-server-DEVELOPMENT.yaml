@@ -1,7 +1,6 @@
 apiVersion: v1
 kind: Template
 metadata:
-  creationTimestamp: null
   name: fh-sync-server
   annotations:
     openshift.io/display-name: FeedHenry Sync (Persistent)
@@ -9,18 +8,27 @@ metadata:
     iconClass: icon-nodejs
     tags: instant-app,sync
     template.openshift.io/long-description: Data Synchronisation by FeedHenry.
-    template.openshift.io/provider-display-name: Red Hat, Inc.
+    template.openshift.io/provider-display-name: FeedHenry
     template.openshift.io/documentation-url: https://github.com/feedhenry/fh-sync-server
     template.openshift.io/support-url: https://github.com/feedhenry/fh-sync-server/issues
 labels:
   template: feedhenry-sync
+parameters:
+  - name: MONGODB_ADMIN_PASSWORD
+    description: Password for the MongoDB admin user. This value will be generated if not specified.
+    generate: expression
+    from: "[a-zA-Z0-9]{40}"
+  - name: MONGODB_USER_NAME
+    description: Username for the created MongoDB user.
+    value: "sync-user"
+  - name: MONGODB_USER_PASSWORD
+    description: Password for the created MongoDB user. This value will be generated if not specified.
+    generate: expression
+    from: "[a-zA-Z0-9]{40}"
 objects:
 - apiVersion: v1
   kind: Service
   metadata:
-    annotations:
-      openshift.io/generated-by: OpenShiftNewApp
-    creationTimestamp: null
     name: fh-sync-server
   spec:
     ports:
@@ -36,9 +44,6 @@ objects:
 - apiVersion: v1
   kind: Service
   metadata:
-    annotations:
-      openshift.io/generated-by: OpenShiftNewApp
-    creationTimestamp: null
     labels:
       app: mongodb-persistent
       template: mongodb-persistent-template
@@ -57,9 +62,6 @@ objects:
 - apiVersion: v1
   kind: Service
   metadata:
-    annotations:
-      openshift.io/generated-by: OpenShiftNewApp
-    creationTimestamp: null
     name: redis
   spec:
     ports:
@@ -74,9 +76,6 @@ objects:
 - apiVersion: v1
   kind: Service
   metadata:
-    annotations:
-      openshift.io/generated-by: OpenShiftWebConsole
-    creationTimestamp: null
     labels:
       app: test1234
     name: test1234
@@ -94,10 +93,6 @@ objects:
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
-    annotations:
-      openshift.io/generated-by: OpenShiftNewApp
-    creationTimestamp: null
-    generation: 1
     labels:
       run: fh-sync-server
     name: fh-sync-server
@@ -107,7 +102,6 @@ objects:
       run: fh-sync-server
     strategy:
       activeDeadlineSeconds: 21600
-      resources: {}
       rollingParams:
         intervalSeconds: 1
         maxSurge: 25%
@@ -117,9 +111,6 @@ objects:
       type: Rolling
     template:
       metadata:
-        annotations:
-          openshift.io/generated-by: OpenShiftNewApp
-        creationTimestamp: null
         labels:
           run: fh-sync-server
       spec:
@@ -141,7 +132,6 @@ objects:
           ports:
           - containerPort: 3000
             protocol: TCP
-          resources: {}
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
         dnsPolicy: ClusterFirst
@@ -156,10 +146,6 @@ objects:
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
-    annotations:
-      openshift.io/generated-by: OpenShiftNewApp
-    creationTimestamp: null
-    generation: 1
     labels:
       app: mongodb-persistent
       template: mongodb-persistent-template
@@ -172,13 +158,9 @@ objects:
       activeDeadlineSeconds: 21600
       recreateParams:
         timeoutSeconds: 600
-      resources: {}
       type: Recreate
     template:
       metadata:
-        annotations:
-          openshift.io/generated-by: OpenShiftNewApp
-        creationTimestamp: null
         labels:
           name: mongodb
       spec:
@@ -264,10 +246,6 @@ objects:
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
-    annotations:
-      openshift.io/generated-by: OpenShiftNewApp
-    creationTimestamp: null
-    generation: 1
     labels:
       run: redis
     name: redis
@@ -277,7 +255,6 @@ objects:
       run: redis
     strategy:
       activeDeadlineSeconds: 21600
-      resources: {}
       rollingParams:
         intervalSeconds: 1
         maxSurge: 25%
@@ -287,9 +264,6 @@ objects:
       type: Rolling
     template:
       metadata:
-        annotations:
-          openshift.io/generated-by: OpenShiftNewApp
-        creationTimestamp: null
         labels:
           run: redis
       spec:
@@ -300,7 +274,6 @@ objects:
           ports:
           - containerPort: 6379
             protocol: TCP
-          resources: {}
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
         dnsPolicy: ClusterFirst
@@ -316,10 +289,7 @@ objects:
   kind: Route
   metadata:
     annotations:
-      openshift.io/generated-by: OpenShiftNewApp
-      openshift.io/host.generated: "true"
       template.openshift.io/expose-hostname: "{.spec.host}"
-    creationTimestamp: null
     name: fh-sync-server
   spec:
     port:
@@ -329,19 +299,15 @@ objects:
     to:
       kind: Service
       name: fh-sync-server
-      weight: 100
     wildcardPolicy: None
 
 - apiVersion: v1
   kind: Secret
-  data:
-    database-admin-password: dUxrSmZQbXNqOFh4dmNpcg==
-    database-password: U21nRk50Tm5nWDFYY2ZPcw==
-    database-user: dXNlckpYUA==
+  stringData:
+    database-admin-password: ${MONGODB_ADMIN_PASSWORD}
+    database-password: ${MONGODB_USER_PASSWORD}
+    database-user: ${MONGODB_USER_NAME}
   metadata:
-    annotations:
-      openshift.io/generated-by: OpenShiftNewApp
-    creationTimestamp: null
     labels:
       app: mongodb-persistent
       template: mongodb-persistent-template
