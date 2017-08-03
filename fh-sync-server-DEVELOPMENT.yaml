@@ -74,23 +74,6 @@ objects:
     type: ClusterIP
 
 - apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      app: test1234
-    name: test1234
-  spec:
-    ports:
-    - name: 8080-tcp
-      port: 8080
-      protocol: TCP
-      targetPort: 8080
-    selector:
-      deploymentconfig: test1234
-    sessionAffinity: None
-    type: ClusterIP
-
-- apiVersion: v1
   kind: DeploymentConfig
   metadata:
     labels:
