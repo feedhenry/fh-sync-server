@@ -12,7 +12,7 @@ metadata:
     template.openshift.io/documentation-url: https://github.com/feedhenry/fh-sync-server
     template.openshift.io/support-url: https://github.com/feedhenry/fh-sync-server/issues
 labels:
-  template: feedhenry-sync
+  template: fh-sync-server
 parameters:
   - name: MONGODB_ADMIN_PASSWORD
     description: Password for the MongoDB admin user. This value will be generated if not specified.
@@ -30,6 +30,9 @@ objects:
   kind: Service
   metadata:
     name: fh-sync-server
+    labels:
+      app: fh-sync-server
+      template: fh-sync-server
   spec:
     ports:
     - name: fh-sync-server
@@ -45,8 +48,8 @@ objects:
   kind: Service
   metadata:
     labels:
-      app: mongodb-persistent
-      template: mongodb-persistent-template
+      app: fh-sync-server
+      template: fh-sync-server
     name: mongodb
   spec:
     ports:
@@ -63,6 +66,9 @@ objects:
   kind: Service
   metadata:
     name: redis
+    labels:
+      app: fh-sync-server
+      template: fh-sync-server
   spec:
     ports:
     - port: 6379
@@ -77,7 +83,8 @@ objects:
   kind: DeploymentConfig
   metadata:
     labels:
-      run: fh-sync-server
+      app: fh-sync-server
+      template: fh-sync-server
     name: fh-sync-server
   spec:
     replicas: 1
@@ -130,8 +137,8 @@ objects:
   kind: DeploymentConfig
   metadata:
     labels:
-      app: mongodb-persistent
-      template: mongodb-persistent-template
+      app: fh-sync-server
+      template: fh-sync-server
     name: mongodb
   spec:
     replicas: 1
@@ -230,6 +237,8 @@ objects:
   kind: DeploymentConfig
   metadata:
     labels:
+      app: fh-sync-server
+      template: fh-sync-server
       run: redis
     name: redis
   spec:
@@ -274,6 +283,9 @@ objects:
     annotations:
       template.openshift.io/expose-hostname: "{.spec.host}"
     name: fh-sync-server
+    labels:
+      app: fh-sync-server
+      template: fh-sync-server
   spec:
     port:
       targetPort: fh-sync-server
@@ -292,14 +304,17 @@ objects:
     database-user: ${MONGODB_USER_NAME}
   metadata:
     labels:
-      app: mongodb-persistent
-      template: mongodb-persistent-template
+      app: fh-sync-server
+      template: fh-sync-server
     name: mongodb
   type: Opaque
 - apiVersion: v1
   kind: PersistentVolumeClaim
   metadata:
     name: mongodb
+    labels:
+      app: fh-sync-server
+      template: fh-sync-server
   spec:
     accessModes:
     - ReadWriteOnce
