@@ -6,7 +6,7 @@ metadata:
     openshift.io/display-name: FeedHenry Sync (Persistent)
     description: FeedHenry Sync Server
     iconClass: icon-nodejs
-    tags: instant-app,sync
+    tags: instant-app,sync,mobile-service
     template.openshift.io/long-description: Data Synchronisation by FeedHenry.
     template.openshift.io/provider-display-name: FeedHenry
     template.openshift.io/documentation-url: https://github.com/feedhenry/fh-sync-server
