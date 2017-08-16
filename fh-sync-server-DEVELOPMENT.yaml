@@ -281,7 +281,7 @@ objects:
   kind: Route
   metadata:
     annotations:
-      template.openshift.io/expose-hostname: "{.spec.host}"
+      template.openshift.io/expose-uri: "https://{.spec.host}{.spec.path}"
     name: fh-sync-server
     labels:
       app: fh-sync-server
