@@ -62,7 +62,18 @@ sync.connect(mongodbConnectionString, mongoOptions, redisUrl, function startAppl
     });
   });
 
-  var port = process.env.SERVER_PORT;
+  app.get('/sys/info/stats', function(req, res) {
+    sync.getStats(function(err, stats) {
+      if (err) {
+        return res.status(500).json({
+          message: err.message || 'Could not retrieve sync stats.'
+        });
+      }
+      return res.json(stats);
+    });
+  });
+
+  var port = process.env.SERVER_PORT || 3000;
   app.listen(port, function () {
     console.log(`\nServer listening on port ${port}!`);
   });
