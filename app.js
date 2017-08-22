@@ -39,6 +39,7 @@ sync.connect(mongodbConnectionString, mongoOptions, redisUrl, function startAppl
     // middleware
   app.use(bodyParser.json());
   app.use(cors());
+  app.use(express.static('public'));
 
   app.get('/', function (req, res) {
     res.send('"OK"');
@@ -69,7 +70,9 @@ sync.connect(mongodbConnectionString, mongoOptions, redisUrl, function startAppl
           message: err.message || 'Could not retrieve sync stats.'
         });
       }
-      return res.json(stats);
+      return res.json({
+        metrics: stats
+      });
     });
   });
 
