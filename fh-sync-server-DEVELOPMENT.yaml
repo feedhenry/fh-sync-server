@@ -47,6 +47,8 @@ objects:
 - apiVersion: v1
   kind: Service
   metadata:
+    annotations:
+      template.openshift.io/expose-name: "fh-sync"
     labels:
       app: fh-sync-server
       template: fh-sync-server
