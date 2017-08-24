@@ -30,7 +30,7 @@
     "body-parser": "^1.17.2",
     "cors": "^2.8.4",
     "express": "^4.15.3",
-    "fh-sync": "^1.0.10"
+    "fh-sync": "^1.0.11"
   },
   "devDependencies": {
     "semistandard": "^11.0.0"
