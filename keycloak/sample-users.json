@@ -1,0 +1,57 @@
+{
+  "realm": "myShoppingList",
+  "users": [{
+    "id": "2d090f2a-0653-41a3-aa18-b37073adf215",
+    "username": "areader",
+    "enabled": true,
+    "totp": false,
+    "emailVerified": true,
+    "firstName": "Anthony",
+    "lastName": "Reader",
+    "email": "reader@example.com",
+    "credentials": [{
+      "type": "password",
+      "hashedSaltedValue": "l0NXEr7ArXDAz4Pf3SdJCp1B9lLZj3llL+dryebE3XebVrO3SQ3eEoLRFcdibJDBYGbZsSonlOk9GWy9VG8C/g==",
+      "salt": "uZc4zCXSAxVUuqALUGQ7HQ==",
+      "hashIterations": 20000,
+      "counter": 0,
+      "algorithm": "pbkdf2-sha256",
+      "digits": 0,
+      "period": 0,
+      "createdDate": 1503055677145,
+      "config": {}
+    }],
+    "disableableCredentialTypes": ["password"],
+    "realmRoles" : ["uma_authorization"],
+    "clientRoles" : {
+      "account" : [ "view-profile" ]
+    },
+    "groups": ["/readers"]
+  }, {
+    "id": "3ae1315a-8527-4dab-93cb-ffccfd6facfc",
+    "username": "awriter",
+    "enabled": true,
+    "totp": false,
+    "emailVerified": true,
+    "firstName": "Anthony",
+    "lastName": "Writer",
+    "email": "awriter@example.com",
+    "credentials": [{
+      "type": "password",
+      "hashedSaltedValue": "5QaqfMNr39JUtAriNc8+gdKLvPXW8fVyhPk/1Nd2tscg+XHt6Bdx3jK1/jidu9OAvRwvxk1B2hjAgidQrKp0CQ==",
+      "salt": "796MbJXts9Sup5CCLivxRA==",
+      "hashIterations": 20000,
+      "counter": 0,
+      "algorithm": "pbkdf2-sha256",
+      "digits": 0,
+      "period": 0,
+      "createdDate": 1503055668415,
+      "config": {}
+    }],
+    "realmRoles" : ["uma_authorization"],
+    "clientRoles" : {
+      "account" : [ "view-profile" ]
+    },
+    "groups": ["/writers"]
+  }]
+}
