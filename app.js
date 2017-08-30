@@ -86,6 +86,9 @@ sync.connect(mongodbConnectionString, mongoOptions, redisUrl, function startAppl
   /**
    * Small wrapper around Keycloak protect() middleware. Will only perform
    * authorization if the SYNC_ENABLE_AUTH environment variable is defined.
+   *
+   * This is only useful for a demo app. This should be removed when using sync
+   * either with or without authentication for real.
    */
   function protectEndpoint(requiredRole) {
     return function(req, res, next) {
@@ -103,7 +106,7 @@ sync.connect(mongodbConnectionString, mongoOptions, redisUrl, function startAppl
   /**
    * Expose sync to clients.
    */
-  app.post('/sync/:datasetId', protectEndpoint(), function (req, res) {
+  app.post('/sync/:datasetId', protectEndpoint('realm:sync_user'), function (req, res) {
     var datasetId = req.params.datasetId;
     var params = req.body;
 
