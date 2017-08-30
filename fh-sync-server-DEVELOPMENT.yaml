@@ -81,8 +81,8 @@ objects:
     sessionAffinity: None
     type: ClusterIP
 
-- apiVersion: v1
-  kind: DeploymentConfig
+- apiVersion: apps/v1beta1
+  kind: Deployment
   metadata:
     labels:
       app: fh-sync-server
@@ -91,7 +91,8 @@ objects:
   spec:
     replicas: 1
     selector:
-      run: fh-sync-server
+      matchLabels:
+        run: fh-sync-server
     strategy:
       activeDeadlineSeconds: 21600
       rollingParams:
@@ -100,14 +101,15 @@ objects:
         maxUnavailable: 25%
         timeoutSeconds: 600
         updatePeriodSeconds: 1
-      type: Rolling
+      type: RollingUpdate
     template:
       metadata:
         labels:
           run: fh-sync-server
       spec:
         containers:
-        - env:
+        - name: fh-sync-server
+          env:
           - name: MONGODB_USER
             valueFrom:
               secretKeyRef:
@@ -120,7 +122,6 @@ objects:
                 name: mongodb
           image: davidmartin/fh-sync-server
           imagePullPolicy: Always
-          name: fh-sync-server
           ports:
           - containerPort: 3000
             protocol: TCP
@@ -135,8 +136,8 @@ objects:
     triggers:
     - type: ConfigChange
 
-- apiVersion: v1
-  kind: DeploymentConfig
+- apiVersion: apps/v1beta1
+  kind: Deployment
   metadata:
     labels:
       app: fh-sync-server
@@ -145,7 +146,8 @@ objects:
   spec:
     replicas: 1
     selector:
-      name: mongodb
+      matchLabels:
+        name: mongodb
     strategy:
       activeDeadlineSeconds: 21600
       recreateParams:
@@ -157,7 +159,8 @@ objects:
           name: mongodb
       spec:
         containers:
-        - env:
+        - name: mongodb
+          env:
           - name: MONGODB_USER
             valueFrom:
               secretKeyRef:
@@ -185,7 +188,6 @@ objects:
             tcpSocket:
               port: 27017
             timeoutSeconds: 1
-          name: mongodb
           ports:
           - containerPort: 27017
             protocol: TCP
@@ -235,8 +237,8 @@ objects:
       type: ImageChange
     - type: ConfigChange
 
-- apiVersion: v1
-  kind: DeploymentConfig
+- apiVersion: apps/v1beta1
+  kind: Deployment
   metadata:
     labels:
       app: fh-sync-server
@@ -246,7 +248,8 @@ objects:
   spec:
     replicas: 1
     selector:
-      run: redis
+      matchLabels:
+        run: redis
     strategy:
       activeDeadlineSeconds: 21600
       rollingParams:
@@ -255,16 +258,16 @@ objects:
         maxUnavailable: 25%
         timeoutSeconds: 600
         updatePeriodSeconds: 1
-      type: Rolling
+      type: RollingUpdate
     template:
       metadata:
         labels:
           run: redis
       spec:
         containers:
-        - image: rhmap/redis:2.18.22
+        - name: redis
+          image: rhmap/redis:2.18.22
           imagePullPolicy: Always
-          name: redis
           ports:
           - containerPort: 6379
             protocol: TCP
