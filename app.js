@@ -42,7 +42,7 @@ sync.connect(mongodbConnectionString, mongoOptions, redisUrl, function startAppl
   app.use(express.static('public'));
 
   app.get('/', function (req, res) {
-    res.send('"OK"');
+    res.redirect(301, '/dashboard.html');
   });
 
   /**
@@ -61,6 +61,10 @@ sync.connect(mongodbConnectionString, mongoOptions, redisUrl, function startAppl
       }
       return res.json(result);
     });
+  });
+
+  app.get('/sys/info/ping', function (req, res) {
+    res.send('"OK"');
   });
 
   app.get('/sys/info/stats', function(req, res) {
