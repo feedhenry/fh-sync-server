@@ -120,7 +120,7 @@ objects:
               secretKeyRef:
                 key: database-password
                 name: mongodb
-          image: davidmartin/fh-sync-server
+          image: feedhenry/fh-sync-server
           imagePullPolicy: Always
           ports:
           - containerPort: 3000
