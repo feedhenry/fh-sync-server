@@ -1,3 +1,5 @@
+const fs = require('fs');
+
 const express = require('express');
 const sync = require('fh-sync');
 const cors = require('cors');
@@ -6,14 +8,25 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const Keycloak = require('keycloak-connect');
 
-const keycloakConfigPath = process.env.SYNC_KEYCLOAK_CONFIG || '/etc/secrets/keycloak-bearer-token/installation';
+const keycloakConfigPath = process.env.SYNC_KEYCLOAK_CONFIG || '/etc/secrets/keycloak-bearer-client/installation';
+
+/**
+ * Temporary fix for secret output not having a .json extension, this should be
+ * fixed in the secret creation itself. Once that is done this should be
+ * removed.
+ *
+ * @param {string} filePath Path to the JSON file
+ */
+const requireJSON = function (filePath) {
+  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+};
 
 var keycloakConfig;
 
 try {
-  keycloakConfig = require(keycloakConfigPath);
+  keycloakConfig = requireJSON(keycloakConfigPath);
 } catch(e) {
-  console.log('Keycloak config not found at ' + keycloakConfigPath + ', auth will not be enabled');
+  console.log('Keycloak config not found at ' + keycloakConfigPath + ', auth will not be enabled', e);
 }
 
 // const authEnabled = !!process.env.SYNC_ENABLE_AUTH;
@@ -88,7 +101,7 @@ sync.connect(mongodbConnectionString, mongoOptions, redisUrl, function startAppl
 
     var keycloak = new Keycloak({
       store: memoryStore
-    });
+    }, keycloakConfig);
 
     app.use(keycloak.middleware());
   }
@@ -113,6 +126,7 @@ sync.connect(mongodbConnectionString, mongoOptions, redisUrl, function startAppl
   function filterPendingForPermission(requiredRole) {
     return function(req, res, next) {
       if(keycloakConfig && req.body.pending && req.body.pending.length > 0 && !req.kauth.grant.access_token.hasRole(requiredRole)) {
+        console.log('Attempted write without correct permissions');
         req.body.pending = [];
         return next()
       }
@@ -157,17 +171,14 @@ sync.connect(mongodbConnectionString, mongoOptions, redisUrl, function startAppl
     });
   });
 
-<<<<<<< 862ca71cda35ec4c7e0d5cc148c37e6fa398d906
   app.get('/sys/info/ping', function (req, res) {
     res.send('"OK"');
   });
 
-=======
   /**
    * Returns metrics about the sync server stored in Redis.
    * For example, the size of each queue.
    */
->>>>>>> FH-3877 Keycloak integration
   app.get('/sys/info/stats', function(req, res) {
     sync.getStats(function(err, stats) {
       if (err) {
