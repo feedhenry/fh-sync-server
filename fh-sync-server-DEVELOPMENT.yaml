@@ -49,6 +49,7 @@ objects:
   metadata:
     annotations:
       template.openshift.io/expose-name: "fh-sync-server"
+      template.openshift.io/expose-type: "fh-sync-server"
     labels:
       app: fh-sync-server
       template: fh-sync-server
