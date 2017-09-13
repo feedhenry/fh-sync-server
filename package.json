@@ -30,7 +30,9 @@
     "body-parser": "^1.17.2",
     "cors": "^2.8.4",
     "express": "^4.15.3",
-    "fh-sync": "^1.0.11"
+    "express-session": "^1.15.5",
+    "fh-sync": "^1.0.11",
+    "keycloak-connect": "^3.3.0-cr.1"
   },
   "devDependencies": {
     "semistandard": "^11.0.0"
