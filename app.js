@@ -8,7 +8,7 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const Keycloak = require('keycloak-connect');
 
-const keycloakConfigPath = process.env.SYNC_KEYCLOAK_CONFIG || '/etc/secrets/keycloak-bearer-client/installation';
+const keycloakConfigPath = process.env.SYNC_KEYCLOAK_CONFIG || '/etc/secrets/keycloak/bearer_installation';
 
 /**
  * Temporary fix for secret output not having a .json extension, this should be
@@ -25,6 +25,7 @@ var keycloakConfig;
 
 try {
   keycloakConfig = requireJSON(keycloakConfigPath);
+  console.log('Keycloak config found, auth is enabled');
 } catch(e) {
   console.log('Keycloak config not found at ' + keycloakConfigPath + ', auth will not be enabled', e);
 }
