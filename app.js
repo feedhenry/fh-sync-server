@@ -8,7 +8,10 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const Keycloak = require('keycloak-connect');
 
+const apiKeyAuth = require('./src/api-key-auth');
+
 const keycloakConfigPath = process.env.SYNC_KEYCLOAK_CONFIG || '/etc/secrets/keycloak/bearer_installation';
+const apiKeyConfigPath = process.env.API_KEY_CONFIG || '/etc/secrets/mcp-mobile-keys/apiKeys';
 
 /**
  * Temporary fix for secret output not having a .json extension, this should be
@@ -22,15 +25,21 @@ const requireJSON = function (filePath) {
 };
 
 var keycloakConfig;
+var apiKeyConfig;
 
 try {
   keycloakConfig = requireJSON(keycloakConfigPath);
-  console.log('Keycloak config found, auth is enabled');
+  console.log('Keycloak config found, Keycloak auth is enabled');
 } catch(e) {
-  console.log('Keycloak config not found at ' + keycloakConfigPath + ', auth will not be enabled', e);
+  console.log(`Keycloak config not found at ${keycloakConfigPath}, Keycloak auth will not be enabled`, e);
 }
 
-// const authEnabled = !!process.env.SYNC_ENABLE_AUTH;
+try {
+  apiKeyConfig = requireJSON(apiKeyConfigPath);
+  console.log('API Keys found, API Key auth is enabled');
+} catch(e) {
+  console.log(`API Keys not found at ${apiKeyConfigPath}, API Key auth will not be enabled`, e);
+}
 
 /**
  * Get configuration for MongoDB to be used with sync.
@@ -88,7 +97,7 @@ sync.connect(mongodbConnectionString, mongoOptions, redisUrl, function startAppl
    * so this should not be set to false if auth should be disabled, instead it
    * should just not be defined.
    */
-  if(keycloakConfig) {
+  if (keycloakConfig) {
     console.log('Initialising Keycloak authentication');
 
     // Initialise the memory store for Keycloak.
@@ -144,8 +153,10 @@ sync.connect(mongodbConnectionString, mongoOptions, redisUrl, function startAppl
    */
   function protectEndpoint(requiredRole) {
     return function(req, res, next) {
-      if(keycloakConfig) {
+      if (keycloakConfig) {
         return keycloak.protect(requiredRole)(req, res, next);
+      } else if (apiKeyConfig) {
+        return apiKeyAuth.protect(apiKeyConfig)(req, res, next)
       }
       return next();
     }
