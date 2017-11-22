@@ -30,6 +30,8 @@ objects:
   kind: Service
   metadata:
     name: fh-sync-server
+    annotations:
+      mcp/prometheus: "enabled"
     labels:
       app: fh-sync-server
       template: fh-sync-server
