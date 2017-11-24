@@ -13,6 +13,13 @@ const apiKeyAuth = require('./src/api-key-auth');
 const keycloakConfigPath = process.env.SYNC_KEYCLOAK_CONFIG || '/etc/secrets/keycloak/bearer_installation';
 const apiKeyConfigPath = process.env.API_KEY_CONFIG || '/etc/secrets/mcp-mobile-keys/apiKeys';
 
+const promClient = require('prom-client');
+
+const collectDefaultMetrics = promClient.collectDefaultMetrics;
+
+// Probe every 5th second.
+collectDefaultMetrics({ timeout: 5000 });
+
 /**
  * Temporary fix for secret output not having a .json extension, this should be
  * fixed in the secret creation itself. Once that is done this should be
@@ -180,6 +187,19 @@ sync.connect(mongodbConnectionString, mongoOptions, redisUrl, function startAppl
         return;
       }
       return res.json(result);
+    });
+  });
+
+  app.get('/metrics', function (req, res) {
+    register = promClient.register;
+    res.set('Content-Type', register.contentType);
+    sync.getStats(function(err, stats) {
+      if (! err) {
+        for(var id in stats) {
+          stat = stats[id];
+        }
+      }
+      return res.end(register.metrics());
     });
   });
 
