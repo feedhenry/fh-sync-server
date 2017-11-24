@@ -191,15 +191,38 @@ sync.connect(mongodbConnectionString, mongoOptions, redisUrl, function startAppl
   });
 
   app.get('/metrics', function (req, res) {
-    register = promClient.register;
-    res.set('Content-Type', register.contentType);
+    function getOrMakeHistogram(name, help){
+      if (typeof promClient.register.getSingleMetric(name) !== "undefined") {
+        return promClient.register.getSingleMetric(name);
+      }
+      var h = new promClient.Histogram({
+        name: name,
+        help: help
+      });
+      
+      promClient.register.registerMetric(h);
+      return h;
+    }
+
+    res.set('Content-Type', promClient.register.contentType);
     sync.getStats(function(err, stats) {
       if (! err) {
-        for(var id in stats) {
-          stat = stats[id];
+        for(var catId in stats) {
+          catStats = stats[catId];
+          for(var statId in catStats) {
+            var catName = "fh_sync_" + catId + "_" + statId;
+            catName = catName.toLowerCase().replace(/ /g, "_");
+            var statValue = catStats[statId].current;
+            if(typeof statValue !== "undefined"){ 
+              if(statValue.toString().indexOf(".") > -1){
+                statValue = statValue.split(".")[0];
+              }
+              getOrMakeHistogram(catName, catId + ": " + statId).observe(parseInt(statValue));
+            }
+          }
         }
       }
-      return res.end(register.metrics());
+      return res.end(promClient.register.metrics());
     });
   });
 
