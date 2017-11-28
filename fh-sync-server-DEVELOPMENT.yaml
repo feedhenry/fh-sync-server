@@ -30,6 +30,8 @@ objects:
   kind: Service
   metadata:
     name: fh-sync-server
+    annotations:
+      org.feedhenry.mcp/prometheus: "plain"
     labels:
       app: fh-sync-server
       template: fh-sync-server

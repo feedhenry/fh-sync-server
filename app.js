@@ -13,6 +13,13 @@ const apiKeyAuth = require('./src/api-key-auth');
 const keycloakConfigPath = process.env.SYNC_KEYCLOAK_CONFIG || '/etc/secrets/keycloak/bearer_installation';
 const apiKeyConfigPath = process.env.API_KEY_CONFIG || '/etc/secrets/mcp-mobile-keys/apiKeys';
 
+const promClient = require('prom-client');
+
+const collectDefaultMetrics = promClient.collectDefaultMetrics;
+
+// Probe every 5th second.
+collectDefaultMetrics({ timeout: 5000 });
+
 /**
  * Temporary fix for secret output not having a .json extension, this should be
  * fixed in the secret creation itself. Once that is done this should be
@@ -180,6 +187,42 @@ sync.connect(mongodbConnectionString, mongoOptions, redisUrl, function startAppl
         return;
       }
       return res.json(result);
+    });
+  });
+
+  app.get('/metrics', function (req, res) {
+    function getOrMakeHistogram(name, help){
+      if (typeof promClient.register.getSingleMetric(name) !== "undefined") {
+        return promClient.register.getSingleMetric(name);
+      }
+      var h = new promClient.Histogram({
+        name: name,
+        help: help
+      });
+      
+      promClient.register.registerMetric(h);
+      return h;
+    }
+
+    res.set('Content-Type', promClient.register.contentType);
+    sync.getStats(function(err, stats) {
+      if (! err) {
+        for(var catId in stats) {
+          catStats = stats[catId];
+          for(var statId in catStats) {
+            var catName = "fh_sync_" + catId + "_" + statId;
+            catName = catName.toLowerCase().replace(/ /g, "_");
+            var statValue = catStats[statId].current;
+            if(typeof statValue !== "undefined"){ 
+              if(statValue.toString().indexOf(".") > -1){
+                statValue = statValue.split(".")[0];
+              }
+              getOrMakeHistogram(catName, catId + ": " + statId).observe(parseInt(statValue));
+            }
+          }
+        }
+      }
+      return res.end(promClient.register.metrics());
     });
   });
 
