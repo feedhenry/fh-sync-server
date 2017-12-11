@@ -191,11 +191,11 @@ sync.connect(mongodbConnectionString, mongoOptions, redisUrl, function startAppl
   });
 
   app.get('/metrics', function (req, res) {
-    function getOrMakeHistogram(name, help){
+    function getOrMakeGauge(name, help){
       if (typeof promClient.register.getSingleMetric(name) !== "undefined") {
         return promClient.register.getSingleMetric(name);
       }
-      var h = new promClient.Histogram({
+      var h = new promClient.Gauge({
         name: name,
         help: help
       });
@@ -214,10 +214,7 @@ sync.connect(mongodbConnectionString, mongoOptions, redisUrl, function startAppl
             catName = catName.toLowerCase().replace(/ /g, "_");
             var statValue = catStats[statId].current;
             if(typeof statValue !== "undefined"){ 
-              if(statValue.toString().indexOf(".") > -1){
-                statValue = statValue.split(".")[0];
-              }
-              getOrMakeHistogram(catName, catId + ": " + statId).observe(parseInt(statValue));
+              getOrMakeGauge(catName, catId + ": " + statId).set(parseFloat(statValue));
             }
           }
         }
