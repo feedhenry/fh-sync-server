@@ -31,7 +31,7 @@
     "cors": "^2.8.4",
     "express": "^4.15.3",
     "express-session": "^1.15.5",
-    "fh-sync": "^1.0.12",
+    "fh-sync": "^2.0.1",
     "keycloak-connect": "^3.3.0-cr.1",
     "prom-client": "^10.2.2"
   },
